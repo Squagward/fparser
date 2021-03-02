@@ -24,8 +24,10 @@
  *
  * 
  * Note from Squagward (module uploader): 
- * This is taken directly from https://github.com/bylexus/fparse
+ * This is taken directly from https://github.com/bylexus/fparse.
  * I already got permission from Alex to use this so you can use this as you wish.
+ * 
+ * For the module repository, visit https://github.com/Squagward/fparser
  */
 
 export class Formula {
