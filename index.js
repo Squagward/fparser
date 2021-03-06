@@ -89,7 +89,7 @@ export class Formula {
 
     s = s.replace(/[\s]+/, '');
     constants.forEach(c => {
-      s = s.replace(new RegExp('([^A-Za-z0-9_]+|^)' + c + '([^A-Za-z]+|$)'), '$1' + Math[c] + '$2');
+      s = s.replace(new RegExp(`([^w]+|^)${c}([^A-Za-z]+|$)`), `$1${Math[c]}$2`);
     });
     return s;
   }
@@ -133,7 +133,7 @@ export class Formula {
             tmp = '';
             act--;
           } else if (this.isOperator(char)) {
-            // Simple operators. Note: '-' must be treaten specially,
+            // Simple operators. Note: '-' must be treated specifically,
             // it could be part of a number.
             // it MUST be part of a number if the last found expression
             // was an operator (or the beginning):
@@ -150,7 +150,10 @@ export class Formula {
             }
 
             // Found a simple operator, store as expression:
-            if (act === lastChar || this.isOperator(expressions[act - 1])) {
+            if (
+              (act === lastChar || this.isOperator(expressions[act - 1])) &&
+              expressions[act - 1] !== '*' // by Squagward
+            ) {
               state = -1; // invalid to end with an operator, or have 2 operators in conjunction
               break;
             } else {
@@ -158,11 +161,23 @@ export class Formula {
               state = 0;
             }
           } else if (char === '(') {
+
+            // add a check if an expression just finished and about to start a new one
+            if (str.charAt(act - 1).match(/[a-zA-Z0-9\)\]]/)) { // by Squagward
+              expressions.push('*');
+            }
+
             // left parenthes found, seems to be the beginning of a new sub-expression:
             state = 'within-parentheses';
             tmp = '';
             pCount = 0;
           } else if (char === '[') {
+
+            // add a check if an expression just finished and about to start a new one
+            if (str.charAt(act - 1).match(/[a-zA-Z0-9\)\]]/)) { // by Squagward
+              expressions.push('*');
+            }
+
             // left named var separator char found, seems to be the beginning of a named var:
             state = 'within-named-var';
             tmp = '';
@@ -187,6 +202,7 @@ export class Formula {
             }
           }
           break;
+
         case 'within-nr':
           char = str.charAt(act);
           if (char.match(/[0-9.]/)) {
@@ -211,7 +227,7 @@ export class Formula {
 
         case 'within-func':
           char = str.charAt(act);
-          if (char.match(/[a-zA-Z0-9]/)) { // Added log10 etc support
+          if (char.match(/[a-zA-Z0-9]/)) { // for log10 support etc
             tmp += char;
           } else if (char === '(') {
             funcName = tmp;
@@ -219,9 +235,8 @@ export class Formula {
             pCount = 0;
             state = 'within-func-parentheses';
           } else {
-            throw new Error('Wrong character for function at position ' + act);
+            throw new Error(`Wrong character for function at position ${act}`);
           }
-
           break;
 
         case 'within-named-var':
@@ -230,12 +245,18 @@ export class Formula {
             // end of named var, create expression:
             expressions.push(this.createVariableEvaluator(tmp));
             this.registerVariable(tmp);
+
+            // add a check if a new expression is coming up and just ended one
+            if (str.charAt(act + 1).match(/[a-zA-Z0-9\(\[]/)) { // by Squagward
+              expressions.push('*');
+            }
+
             tmp = '';
             state = 0;
-          } else if (char.match(/[a-zA-Z0-9_]/)) {
+          } else if (char.match(/\w/)) {
             tmp += char;
           } else {
-            throw new Error('Character not allowed within named variable: ' + char);
+            throw new Error(`Character not allowed within named variable: ${char}`);
           }
           break;
 
@@ -458,7 +479,7 @@ export class Formula {
         // Has the JS Math object a function as requested? Call it:
         return Math[fname].apply(me, innerValues);
       } else {
-        throw 'Function not found: ' + fname;
+        throw `Function not found: ${fname}`;
       }
     };
   }
@@ -477,7 +498,7 @@ export class Formula {
       if (valObj[varname] !== undefined) {
         return valObj[varname];
       } else {
-        throw new Error('Cannot evaluate ' + varname + ': No value given');
+        throw new Error(`Cannot evaluate ${varname}: No value given`);
       }
     };
   }
@@ -488,3 +509,8 @@ export class Formula {
   }
 }
 export default Formula;
+
+/**
+ * Known issues:
+ * (x-2)x doesn't multiply by outside
+ */

@@ -7,7 +7,7 @@ fparser
 fparser provides a Formula class that parses strings containing mathematical formulas (e.g. `x*sin(PI*x/2)`) into an evaluationable object.
 One can then provide values for all unknown variables / functions and evaluate a numeric value from the formula.
 
-For an example application, see http://fparse.alexi.ch/.
+For an example application, see **coming soon**.
 
 Features
 ---------
