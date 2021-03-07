@@ -8,12 +8,12 @@
  *
  * Example input:
  *
- * var fObj = new Formula('sin(PI*x)/(2*PI)');
- * var result = fObj.evaluate({x: 2});
+ * var fObj = new Formula("sin(PI * x) / (2 * PI)");
+ * var result = fObj.evaluate({ x: 2 });
  * var results = fObj.evaluate([
- *     {x: 2},
- *     {x: 4},
- *     {x: 8}
+ *     { x: 2 },
+ *     { x: 4 },
+ *     { x: 8 }
  * ]);
  *
  * LICENSE:
@@ -44,35 +44,35 @@ export class Formula {
 
   /**
    *
-   * Splits the given string by ',', makes sure the ',' is not within
+   * Splits the given string by ",", makes sure the "," is not within
    * a sub-expression
    * e.g.: str = "x,pow(3,4)" returns 2 elements: x and pow(3,4).
    */
   splitFunctionParams(toSplit) {
-    // do not split on ',' within matching brackets.
+    // do not split on "," within matching brackets.
     let pCount = 0,
-      paramStr = '';
+      paramStr = "";
     const params = [];
     for (let i = 0; i < toSplit.length; i++) {
-      if (toSplit[i] === ',' && pCount === 0) {
-        // Found function param, save 'em
+      if (toSplit[i] === "," && pCount === 0) {
+        // Found function param, save "em
         params.push(paramStr);
-        paramStr = '';
-      } else if (toSplit[i] === '(') {
+        paramStr = "";
+      } else if (toSplit[i] === "(") {
         pCount++;
         paramStr += toSplit[i];
-      } else if (toSplit[i] === ')') {
+      } else if (toSplit[i] === ")") {
         pCount--;
         paramStr += toSplit[i];
         if (pCount < 0) {
-          throw 'ERROR: Too many closing parentheses!';
+          throw "ERROR: Too many closing parentheses!";
         }
       } else {
         paramStr += toSplit[i];
       }
     }
     if (pCount !== 0) {
-      throw 'ERROR: Too many opening parentheses!';
+      throw "ERROR: Too many opening parentheses!";
     }
     if (paramStr.length > 0) {
       params.push(paramStr);
@@ -85,9 +85,9 @@ export class Formula {
    * and replaces some known constants:
    */
   cleanupInputString(s) {
-    const constants = ['PI', 'E', 'LN2', 'LN10', 'LOG2E', 'LOG10E', 'SQRT1_2', 'SQRT2'];
+    const constants = ["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"];
 
-    s = s.replace(/[\s]+/, '');
+    s = s.replace(/[\s]+/, "");
     constants.forEach(c => {
       s = s.replace(new RegExp(`([^w]+|^)${c}([^A-Za-z]+|$)`), `$1${Math[c]}$2`);
     });
@@ -96,10 +96,10 @@ export class Formula {
 
   /**
    * So... How do we parse a formula?
-   * first, we have to split the items into 'expressions': An expression can be:
-   *   - a number, e.g. '3.45'
-   *   - an unknown variable, e.g. 'x'
-   *   - a single char operator, such as '*','+' etc...
+   * first, we have to split the items into "expressions": An expression can be:
+   *   - a number, e.g. "3.45"
+   *   - an unknown variable, e.g. "x"
+   *   - a single char operator, such as "*","+" etc...
    *   - a named variable, in [], e.g. [myvar]
    *   - a function, such as sin(x)
    *   - a parenthessed expression, containing other expressions
@@ -109,50 +109,50 @@ export class Formula {
    * state we are in or into which state we have to change.
    */
   parse(str) {
-    // First of all: Away with all we don't have a need for:
+    // First of all: Away with all we don"t have a need for:
     // Additionally, replace some constants:
     str = this.cleanupInputString(str);
 
     let lastChar = str.length - 1,
-      act = 0,
+      index = 0,
       state = 0,
       expressions = [],
-      char = '',
-      tmp = '',
+      char = "",
+      tmp = "",
       funcName = null,
       pCount = 0;
 
-    while (act <= lastChar) {
+    while (index <= lastChar) {
       switch (state) {
         case 0:
           // None state, the beginning. Read a char and see what happens.
-          char = str.charAt(act);
+          char = str.charAt(index);
           if (char.match(/[0-9.]/)) {
             // found the beginning of a number, change state to "within-number"
-            state = 'within-nr';
-            tmp = '';
-            act--;
+            state = "within-nr";
+            tmp = "";
+            index--;
           } else if (this.isOperator(char)) {
-            // Simple operators. Note: '-' must be treated specifically,
+            // Simple operators. Note: "-" must be treated specifically,
             // it could be part of a number.
             // it MUST be part of a number if the last found expression
             // was an operator (or the beginning):
-            if (char === '-') {
+            if (char === "-") {
               if (
                 expressions.length === 0 ||
                 (expressions[expressions.length - 1] &&
-                  typeof expressions[expressions.length - 1] === 'string')
+                  typeof expressions[expressions.length - 1] === "string")
               ) {
-                state = 'within-nr';
-                tmp = '-';
+                state = "within-nr";
+                tmp = "-";
                 break;
               }
             }
 
             // Found a simple operator, store as expression:
             if (
-              (act === lastChar || this.isOperator(expressions[act - 1])) &&
-              expressions[act - 1] !== '*' // by Squagward
+              (index === lastChar || this.isOperator(expressions[index - 1])) &&
+              expressions[index - 1] !== "*" // by Squagward
             ) {
               state = -1; // invalid to end with an operator, or have 2 operators in conjunction
               break;
@@ -160,98 +160,98 @@ export class Formula {
               expressions.push(char);
               state = 0;
             }
-          } else if (char === '(') {
+          } else if (char === "(") {
 
             // add a check if an expression just finished and about to start a new one
-            if (str.charAt(act - 1).match(/[a-zA-Z0-9\)\]]/)) { // by Squagward
-              expressions.push('*');
+            if (str.charAt(index - 1).match(/[a-zA-Z0-9\)\]]/)) { // by Squagward
+              expressions.push("*");
             }
 
             // left parenthes found, seems to be the beginning of a new sub-expression:
-            state = 'within-parentheses';
-            tmp = '';
+            state = "within-parentheses";
+            tmp = "";
             pCount = 0;
-          } else if (char === '[') {
+          } else if (char === "[") {
 
             // add a check if an expression just finished and about to start a new one
-            if (str.charAt(act - 1).match(/[a-zA-Z0-9\)\]]/)) { // by Squagward
-              expressions.push('*');
+            if (str.charAt(index - 1).match(/[a-zA-Z0-9\)\]]/)) { // by Squagward
+              expressions.push("*");
             }
 
             // left named var separator char found, seems to be the beginning of a named var:
-            state = 'within-named-var';
-            tmp = '';
+            state = "within-named-var";
+            tmp = "";
           } else if (char.match(/[a-zA-Z]/)) {
             // multiple chars means it may be a function, else its a var which counts as own expression:
-            if (act < lastChar && str.charAt(act + 1).match(/[a-zA-Z]/)) {
+            if (index < lastChar && str.charAt(index + 1).match(/[a-zA-Z]/)) {
               tmp = char;
-              state = 'within-func';
+              state = "within-func";
             } else {
               // Single variable found:
               // We need to check some special considerations:
               // - If the last char was a number (e.g. 3x), we need to create a multiplication out of it (3*x)
               if (expressions.length > 0) {
-                if (typeof expressions[expressions.length - 1] === 'number') {
-                  expressions.push('*');
+                if (typeof expressions[expressions.length - 1] === "number") {
+                  expressions.push("*");
                 }
               }
               expressions.push(this.createVariableEvaluator(char));
               this.registerVariable(char);
               state = 0;
-              tmp = '';
+              tmp = "";
             }
           }
           break;
 
-        case 'within-nr':
-          char = str.charAt(act);
+        case "within-nr":
+          char = str.charAt(index);
           if (char.match(/[0-9.]/)) {
             //Still within number, store and continue
             tmp += char;
-            if (act === lastChar) {
+            if (index === lastChar) {
               expressions.push(Number(tmp));
               state = 0;
             }
           } else {
             // Number finished on last round, so add as expression:
-            if (tmp === '-') {
-              // just a single '-' means: a variable could follow (e.g. like in 3*-x), we convert it to -1: (3*-1x)
+            if (tmp === "-") {
+              // just a single "-" means: a variable could follow (e.g. like in 3*-x), we convert it to -1: (3*-1x)
               tmp = -1;
             }
             expressions.push(Number(tmp));
-            tmp = '';
+            tmp = "";
             state = 0;
-            act--;
+            index--;
           }
           break;
 
-        case 'within-func':
-          char = str.charAt(act);
+        case "within-func":
+          char = str.charAt(index);
           if (char.match(/[a-zA-Z0-9]/)) { // for log10 support etc
             tmp += char;
-          } else if (char === '(') {
+          } else if (char === "(") {
             funcName = tmp;
-            tmp = '';
+            tmp = "";
             pCount = 0;
-            state = 'within-func-parentheses';
+            state = "within-func-parentheses";
           } else {
-            throw new Error(`Wrong character for function at position ${act}`);
+            throw new Error(`Wrong character for function at position ${index}`);
           }
           break;
 
-        case 'within-named-var':
-          char = str.charAt(act);
-          if (char === ']') {
+        case "within-named-var":
+          char = str.charAt(index);
+          if (char === "]") {
             // end of named var, create expression:
             expressions.push(this.createVariableEvaluator(tmp));
             this.registerVariable(tmp);
 
             // add a check if a new expression is coming up and just ended one
-            if (str.charAt(act + 1).match(/[a-zA-Z0-9\(\[]/)) { // by Squagward
-              expressions.push('*');
+            if (str.charAt(index + 1).match(/[a-zA-Z0-9\(\[]/)) { // by Squagward
+              expressions.push("*");
             }
 
-            tmp = '';
+            tmp = "";
             state = 0;
           } else if (char.match(/\w/)) {
             tmp += char;
@@ -260,16 +260,16 @@ export class Formula {
           }
           break;
 
-        case 'within-parentheses':
-        case 'within-func-parentheses':
-          char = str.charAt(act);
-          if (char === ')') {
+        case "within-parentheses":
+        case "within-func-parentheses":
+          char = str.charAt(index);
+          if (char === ")") {
             //Check if this is the matching closing parenthesis.If not, just read ahead.
             if (pCount <= 0) {
               // Yes, we found the closing parenthesis, create new sub-expression:
-              if (state === 'within-parentheses') {
+              if (state === "within-parentheses") {
                 expressions.push(new Formula(tmp, this));
-              } else if (state === 'within-func-parentheses') {
+              } else if (state === "within-func-parentheses") {
                 // Function found: return a function that,
                 // when evaluated, evaluates first the sub-expression
                 // then returns the function value of the sub-expression.
@@ -282,7 +282,7 @@ export class Formula {
               pCount--;
               tmp += char;
             }
-          } else if (char === '(') {
+          } else if (char === "(") {
             // begin of a new sub-parenthesis, increase counter:
             pCount++;
             tmp += char;
@@ -292,18 +292,18 @@ export class Formula {
           }
           break;
       }
-      act++;
+      index++;
     }
 
     if (state !== 0) {
-      throw new Error('Could not parse formula: Syntax error.');
+      throw new Error("Could not parse formula: Syntax error.");
     }
 
     return expressions;
   }
 
   isOperator(char) {
-    return typeof char === 'string' && char.match(/[\+\-\*\/\^]/);
+    return typeof char === "string" && char.match(/[\+\-\*\/\^]/);
   }
 
   registerVariable(varName) {
@@ -366,24 +366,24 @@ export class Formula {
        *    replace the item with the result
        */
       item = workArr[i];
-      if (typeof item === 'function') {
+      if (typeof item === "function") {
         workArr[i] = item(valueObj);
       } else if (item instanceof Formula) {
         workArr[i] = item.evaluate(valueObj);
-      } else if (typeof item !== 'number' && typeof item !== 'string') {
-        console.error('UNKNOWN OBJECT IN EXPRESSIONS ARRAY!', item);
-        throw new Error('Unknown object in Expressions array');
+      } else if (typeof item !== "number" && typeof item !== "string") {
+        console.error("UNKNOWN OBJECT IN EXPRESSIONS ARRAY!", item);
+        throw new Error("Unknown object in Expressions array");
       }
     }
 
-    // Now we should have a number-only array, let's evaulate the '^' operator:
+    // Now we should have a number-only array, let"s evaulate the "^" operator:
     while (runAgain) {
       runAgain = false;
       for (i = 0; i < workArr.length; i++) {
         item = workArr[i];
-        if (typeof item === 'string' && item === '^') {
+        if (typeof item === "string" && item === "^") {
           if (i === 0 || i === workArr.length - 1) {
-            throw 'Wrong operator position!';
+            throw "Wrong operator position!";
           }
           left = Number(workArr[i - 1]);
           right = Number(workArr[i + 1]);
@@ -395,19 +395,19 @@ export class Formula {
       }
     }
 
-    // Now we should have a number-only array, let's evaulate the '*','/' operators:
+    // Now we should have a number-only array, let"s evaulate the "*","/" operators:
     runAgain = true;
     while (runAgain) {
       runAgain = false;
       for (i = 0; i < workArr.length; i++) {
         item = workArr[i];
-        if (typeof item === 'string' && (item === '*' || item === '/')) {
+        if (typeof item === "string" && (item === "*" || item === "/")) {
           if (i === 0 || i === workArr.length - 1) {
-            throw 'Wrong operator position!';
+            throw "Wrong operator position!";
           }
           left = Number(workArr[i - 1]);
           right = Number(workArr[i + 1]);
-          workArr[i - 1] = item === '*' ? left * right : left / right;
+          workArr[i - 1] = item === "*" ? left * right : left / right;
           workArr.splice(i, 2);
           runAgain = true;
           break;
@@ -415,19 +415,19 @@ export class Formula {
       }
     }
 
-    // Now we should have a number-only array, let's evaulate the '+','-' operators:
+    // Now we should have a number-only array, let"s evaulate the "+","-" operators:
     runAgain = true;
     while (runAgain) {
       runAgain = false;
       for (i = 0; i < workArr.length; i++) {
         item = workArr[i];
-        if (typeof item === 'string' && (item === '+' || item === '-')) {
+        if (typeof item === "string" && (item === "+" || item === "-")) {
           if (i === 0 || i === workArr.length - 1) {
-            throw new Error('Wrong operator position!');
+            throw new Error("Wrong operator position!");
           }
           left = Number(workArr[i - 1]);
           right = Number(workArr[i + 1]);
-          workArr[i - 1] = item === '+' ? left + right : left - right;
+          workArr[i - 1] = item === "+" ? left + right : left - right;
           workArr.splice(i, 2);
           runAgain = true;
           break;
@@ -470,12 +470,12 @@ export class Formula {
       }
       // If the valueObj itself has a function definition with
       // the function name, call this one:
-      if (valueObj && typeof valueObj[fname] === 'function') {
+      if (valueObj && typeof valueObj[fname] === "function") {
         return valueObj[fname].apply(me, innerValues);
-      } else if (typeof me[fname] === 'function') {
+      } else if (typeof me[fname] === "function") {
         // perhaps the Formula object has the function? so call it:
         return me[fname].apply(me, innerValues);
-      } else if (typeof Math[fname] === 'function') {
+      } else if (typeof Math[fname] === "function") {
         // Has the JS Math object a function as requested? Call it:
         return Math[fname].apply(me, innerValues);
       } else {
@@ -512,5 +512,6 @@ export default Formula;
 
 /**
  * Known issues:
- * (x-2)x doesn't multiply by outside
+ * (x-2)x doesn"t multiply by outside
+ * xy doesn"t equal x*y
  */
