@@ -7,6 +7,8 @@
  * For the module repository, visit https://github.com/Squagward/fparser
  */
 export class Formula {
+  static mappings = [];
+
   constructor(fStr, topFormula = null) {
     this.formulaExpression = null;
     this.variables = [];
@@ -16,6 +18,19 @@ export class Formula {
     this.formulaExpression = this.parse(fStr);
 
     return this;
+  }
+
+  /**
+   * 
+   * @param {string} newFn the new way you want to rename oldFn
+   * @param {string} oldFn the Math function to call with newFn
+   */
+  static addCustomMapping(newFn, oldFn) {
+    if (typeof Math[oldFn] === "function") {
+      Formula.mappings.push({ [newFn]: oldFn });
+    } else {
+      throw new Error(`${oldFunc} is not a pre-existing Math function`);
+    }
   }
 
   /**
@@ -443,6 +458,13 @@ export class Formula {
       for (let i = 0; i < args.length; i++) {
         innerValues.push(args[i].evaluate(valueObj));
       }
+
+      for (let i = 0; i < Formula.mappings.length; i++) {
+        let key = Object.keys(Formula.mappings[i])[0];
+        if (typeof Math[Formula.mappings[i][key]] === "function") {
+          return Math[Formula.mappings[i][key]].apply(me, innerValues);
+        }
+      }
       // If the valueObj itself has a function definition with
       // the function name, call this one:
       if (valueObj && typeof valueObj[fname] === "function") {
@@ -483,257 +505,6 @@ export class Formula {
   }
 }
 
-/**
- * JS Formula Parser
- * -------------------
- * This is a special Formula class which makes `ln` and `log` do `Math.log` and `Math.log10` respectively.
- */
-export class ModifiedFormula extends Formula {
-  constructor(fStr, topFormula = null) {
-    this.formulaExpression = null;
-    this.variables = [];
-    this.topFormula = topFormula;
-
-    this.formulaStr = fStr;
-    this.formulaExpression = this.parse(fStr);
-
-    return this;
-  }
-
-  parse(str) {
-    // First of all: Away with all we don't have a need for:
-    // Additionally, replace some constants:
-    str = this.cleanupInputString(str);
-
-    let lastChar = str.length - 1,
-      act = 0,
-      state = 0,
-      expressions = [],
-      char = "",
-      tmp = "",
-      funcName = null,
-      pCount = 0;
-
-    while (act <= lastChar) {
-      switch (state) {
-        case 0:
-          // None state, the beginning. Read a char and see what happens.
-          char = str.charAt(act);
-          if (char.match(/[0-9.]/)) {
-            // found the beginning of a number, change state to "within-number"
-            state = "within-nr";
-            tmp = "";
-            act--;
-          } else if (this.isOperator(char)) {
-            // Simple operators. Note: "-" must be treated specifically,
-            // it could be part of a number.
-            // it MUST be part of a number if the last found expression
-            // was an operator (or the beginning):
-            if (char === "-") {
-              if (
-                expressions.length === 0 ||
-                (expressions[expressions.length - 1] &&
-                  typeof expressions[expressions.length - 1] === "string")
-              ) {
-                state = "within-nr";
-                tmp = "-";
-                break;
-              }
-            }
-
-            // Found a simple operator, store as expression:
-            if (
-              (act === lastChar || this.isOperator(expressions[act - 1])) &&
-              expressions[act - 1] !== "*" // by Squagward
-            ) {
-              state = -1; // invalid to end with an operator, or have 2 operators in conjunction
-              break;
-            } else {
-              expressions.push(char);
-              state = 0;
-            }
-          } else if (char === "(") {
-
-            // add a check if an expression just finished and about to start a new one
-            if (str.charAt(act - 1).match(/[a-zA-Z0-9\)\]]/)) { // by Squagward
-              expressions.push("*");
-            }
-
-            // left parenthes found, seems to be the beginning of a new sub-expression:
-            state = "within-parentheses";
-            tmp = "";
-            pCount = 0;
-          } else if (char === "[") {
-
-            // add a check if an expression just finished and about to start a new one
-            if (str.charAt(act - 1).match(/[a-zA-Z0-9\)\]]/)) { // by Squagward
-              expressions.push("*");
-            }
-
-            // left named var separator char found, seems to be the beginning of a named var:
-            state = "within-named-var";
-            tmp = "";
-          } else if (char.match(/[a-zA-Z]/)) {
-            // multiple chars means it may be a function, else its a var which counts as own expression:
-            if (act < lastChar && str.charAt(act + 1).match(/[a-zA-Z]/)) {
-              tmp = char;
-              state = "within-func";
-            } else {
-              // Single variable found:
-              // We need to check some special considerations:
-              // - If the last char was a number (e.g. 3x), we need to create a multiplication out of it (3*x)
-              if (expressions.length > 0) {
-                if (typeof expressions[expressions.length - 1] === "number") {
-                  expressions.push("*");
-                }
-              }
-              expressions.push(this.createVariableEvaluator(char));
-              this.registerVariable(char);
-              state = 0;
-              tmp = "";
-            }
-          }
-          break;
-
-        case "within-nr":
-          char = str.charAt(act);
-          if (char.match(/[0-9.]/)) {
-            //Still within number, store and continue
-            tmp += char;
-            if (act === lastChar) {
-              expressions.push(Number(tmp));
-              state = 0;
-            }
-          } else {
-            // Number finished on last round, so add as expression:
-            if (tmp === "-") {
-              // just a single "-" means: a variable could follow (e.g. like in 3*-x), we convert it to -1: (3*-1x)
-              tmp = -1;
-            }
-            expressions.push(Number(tmp));
-            tmp = "";
-            state = 0;
-            act--;
-          }
-          break;
-
-        case "within-func":
-          char = str.charAt(act);
-          if (char.match(/[a-zA-Z0-9]/)) { // for log10 support etc
-            tmp += char;
-          } else if (char === "(") {
-            funcName = tmp;
-            tmp = "";
-            pCount = 0;
-            state = "within-func-parentheses";
-          } else {
-            throw new Error(`Wrong character for function at position ${act}`);
-          }
-          break;
-
-        case "within-named-var":
-          char = str.charAt(act);
-          if (char === "]") {
-            // end of named var, create expression:
-            expressions.push(this.createVariableEvaluator(tmp));
-            this.registerVariable(tmp);
-
-            // add a check if a new expression is coming up and just ended one
-            if (str.charAt(act + 1).match(/[a-zA-Z0-9\(\[]/)) { // by Squagward
-              expressions.push("*");
-            }
-
-            tmp = "";
-            state = 0;
-          } else if (char.match(/\w/)) {
-            tmp += char;
-          } else {
-            throw new Error(`Character not allowed within named variable: ${char}`);
-          }
-          break;
-
-        case "within-parentheses":
-        case "within-func-parentheses":
-          char = str.charAt(act);
-          if (char === ")") {
-            //Check if this is the matching closing parenthesis.If not, just read ahead.
-            if (pCount <= 0) {
-              // Yes, we found the closing parenthesis, create new sub-expression:
-              if (state === "within-parentheses") {
-                expressions.push(new ModifiedFormula(tmp, this));
-              } else if (state === "within-func-parentheses") {
-                // Function found: return a function that,
-                // when evaluated, evaluates first the sub-expression
-                // then returns the function value of the sub-expression.
-                // Access to the function is private within the closure:
-                expressions.push(this.createFunctionEvaluator(tmp, funcName));
-                funcName = null;
-              }
-              state = 0;
-            } else {
-              pCount--;
-              tmp += char;
-            }
-          } else if (char === "(") {
-            // begin of a new sub-parenthesis, increase counter:
-            pCount++;
-            tmp += char;
-          } else {
-            // all other things are just added to the sub-expression:
-            tmp += char;
-          }
-          break;
-      }
-      act++;
-    }
-
-    if (state !== 0) {
-      throw new Error("Could not parse formula: Syntax error.");
-    }
-
-    return expressions;
-  }
-
-  createFunctionEvaluator(arg, fname) {
-    // Functions can have multiple params, comma separated.
-    // Split them:
-    let args = this.splitFunctionParams(arg),
-      me = this;
-
-    const alternatives = { ln: "log", log: "log10" };
-
-    for (let i = 0; i < args.length; i++) {
-      args[i] = new Formula(args[i], me);
-    }
-    // Args now is an array of function expressions:
-    return function (valueObj) {
-      const innerValues = [];
-      for (let i = 0; i < args.length; i++) {
-        innerValues.push(args[i].evaluate(valueObj));
-      }
-      // If the valueObj itself has a function definition with
-      // the function name, call this one:
-      if (valueObj && typeof valueObj[fname] === "function") {
-        return valueObj[fname].apply(me, innerValues);
-      } else if (typeof me[fname] === "function") {
-        // perhaps the Formula object has the function? so call it:
-        return me[fname].apply(me, innerValues);
-      } else if (typeof Math[alternatives[fname]] === "function") {
-        // check for log and ln
-        return Math[alternatives[fname]].apply(me, innerValues);
-      } else if (typeof Math[fname] === "function") {
-        // Has the JS Math object a function as requested? Call it:
-        return Math[fname].apply(me, innerValues);
-      } else {
-        throw `Function not found: ${fname}`;
-      }
-    };
-  }
-
-  static calc(formula, valueObj = {}) {
-    return new ModifiedFormula(formula).evaluate(valueObj);
-  }
-}
 /**
  * Known issues:
  * (x-2)x doesn't multiply by outside
