@@ -154,9 +154,8 @@ export class Formula {
               state = 0;
             }
           } else if (char === "(") {
-
             // add a check if an expression just finished and about to start a new one
-            if (str.charAt(index - 1).match(/[a-zA-Z0-9\)\]]/)) { // by Squagward
+            if (str.charAt(index - 1).match(/[a-zA-Z0-9\)\]\-]/)) { // by Squagward
               expressions.push("*");
             }
 
@@ -167,7 +166,7 @@ export class Formula {
           } else if (char === "[") {
 
             // add a check if an expression just finished and about to start a new one
-            if (str.charAt(index - 1).match(/[a-zA-Z0-9\)\]]/)) { // by Squagward
+            if (str.charAt(index - 1).match(/[a-zA-Z0-9\)\]\-]/)) { // by Squagward
               expressions.push("*");
             }
 
