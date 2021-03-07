@@ -1,46 +1,43 @@
-fparser
-=======
+# fparser
 
 > A JavaScript Formula Parser
-
 
 fparser provides a Formula class that parses strings containing mathematical formulas (e.g. `x*sin(PI*x/2)`) into an evaluationable object.
 One can then provide values for all unknown variables / functions and evaluate a numeric value from the formula.
 
 For an example application, see **coming soon**.
 
-Features
----------
+## Features
 
 Parses a mathematical formula from a string. Known expressions:
 
-* *Numbers* in the form of digits (e.g. `-133.2945`)
-* *simple operators*: '+','-','*','/', '^' expanded in correct order
-* *parentheses* '(', ')' for grouping (e.g. `5*(3+2)`)
-* all *JavaScript Math object functions* (e.g. `sin(3.14)`)
-* all *JavaScript Math constants* like PI, E
-* the use of *own functions*
-* the use of single-char *variables* (like `2x`)
-* the use of named variables (like `2*[myVar]`)
-* Example:  
-`-1*(sin(2^x)/(PI*x))*cos(x))`
+- _Numbers_ in the form of digits (e.g. `-133.2945`)
+- _simple operators_: '+','-','\*','/', '^' expanded in correct order
+- _parentheses_ '(', ')' for grouping (e.g. `5*(3+2)`)
+- all _JavaScript Math object functions_ (e.g. `sin(3.14)`)
+- all _JavaScript Math constants_ like PI, E
+- the use of _own functions_
+- the use of single-char _variables_ (like `2x`)
+- the use of named variables (like `2*[myVar]`)
+- Example:  
+  `-1*(sin(2^x)/(PI*x))*cos(x))`
 
-
-Usage
-------
+## Usage
 
 Import using any of these methods:
 
 ```javascript
-import Formula from 'fparser';
-import Formula from '../fparser';
-import { Formula } from 'fparser';
-import { Formula } from '../fparser';
+import { Formula, ModifiedFormula } from "fparser";
+import { Formula, ModifiedFormula } from "../fparser";
 ```
+
+> Note: `ModifiedFormula` has ln and log functions so in case you don't want to do `log10(x)`,
+> you can just use `log(x)` instead. However, if you would like to stay true to the `Math` functions,
+> go ahead and use `Formula` objects.
 
 ```javascript
 // 1. Create a Formula object instance by passing a formula string:
-const fObj = new Formula('2^x');
+const fObj = new Formula("2^x");
 
 // 2. evaluate the formula, delivering a value object for each unknown entity:
 const result = fObj.evaluate({ x: 3 }); // result = 8
@@ -49,16 +46,16 @@ const result = fObj.evaluate({ x: 3 }); // result = 8
 const results = fObj.evaluate([{ x: 2 }, { x: 4 }, { x: 8 }]); // results = [4,16,256]
 
 // You can also directly evaluate a value if you only need a one-shot result:
-const result = Formula.calc('2^x', { x: 3 }); // result = 8
-const results = Formula.calc('2^x', [{ x: 2 }, { x: 4 }, { x: 8 }]); // results = [4,16,256]
+const result = Formula.calc("2^x", { x: 3 }); // result = 8
+const results = Formula.calc("2^x", [{ x: 2 }, { x: 4 }, { x: 8 }]); // results = [4,16,256]
 ```
 
-Advanced Usage
---------------
+## Advanced Usage
 
 ### Using multiple variables
+
 ```javascript
-const fObj = new Formula('a*x^2 + b*x + c');
+const fObj = new Formula("a*x^2 + b*x + c");
 
 // Just pass a value object containing a value for each unknown variable:
 const result = fObj.evaluate({ a: 2, b: -1, c: 3, x: 3 }); // result = 18
@@ -67,21 +64,24 @@ const result = fObj.evaluate({ a: 2, b: -1, c: 3, x: 3 }); // result = 18
 ### Using named variables
 
 Instead of single-char variables (like `2x+y`), you can also use named variables in brackets:
+
 ```javascript
-const fObj = new Formula('2*[var1] + sin([var2]+PI)');
+const fObj = new Formula("2*[var1] + sin([var2]+PI)");
 
 // Just pass a value object containing a value for each named variable:
 const result = fObj.evaluate({ var1: 5, var2: 0.7 });
 ```
 
 ### Using user-defined functions
+
 Currently only the 2nd option is functional. I'll try to see if I could find a fix to it.
+
 ```javascript
 const fObj = new Formula('sin(inverse(x))');
 
 //Define the function(s) on the Formula object, then use it multiple times:
-fObj.inverse = value => 1 / value; 
-const results = fObj.evaluate({ x: 1, x: 2, x: 3 });
+// fObj.inverse = value => 1 / value; // Does not work due to rhino I think
+//const results = fObj.evaluate({ x: 1, x: 2, x: 3 });
 
 
 // Or pass it in the value object, and OVERRIDE an existing function:
@@ -95,13 +95,14 @@ If defined in the value object AND on the formula object, the Value object has t
 ```
 
 ### Get all used variables
+
 ```javascript
 // Get all used variables in the order of their appereance:
-const f4 = new Formula('x*sin(PI*y) + y / (2-x*[var1]) + [var2]');
+const f4 = new Formula("x*sin(PI*y) + y / (2-x*[var1]) + [var2]");
 console.log(f4.getVariables()); // ['x','y','var1','var2']
 ```
 
-Credit:
------
-- This is taken directly from https://github.com/bylexus/fparse with very minor changes
+## Credit:
+
+- This is taken directly from https://github.com/bylexus/fparse with some changes
 - I have contacted Alex (original creator) and he said it was fine for me to upload.
