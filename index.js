@@ -21,18 +21,26 @@ export class Formula {
   }
 
   /**
-   * `[{name, old}, {name, old}]`
-   * @param {object|object[]} valueObj 
+   * Add custom `Math` class mappings to names of your choosing.  
+   * `Formula.addMappings({ "ln": "log" });`  
+   * This allows the user to input `ln(x)`. 
+   * 
+   * This also can take an array of mapping objects as the argument.  
+   * `Formula.addMappings({ "ln": "log" }, { "func": "log10" });`  
+   * Now when the user inputs `log(x)` it still returns the natural log,
+   * but when they input `func(x)` it now returns log base 10.
    */
   static addMappings(valueObj) {
     const results = [];
     if (valueObj instanceof Array) {
       for (i = 0; i < valueObj.length; i++) {
+        // recursively add mappings for every object in the array
         results[i] = Formula.addMappings(valueObj[i]);
       }
       return results;
     }
     for ([key, val] of Object.entries(valueObj)) {
+      // add the key value pairs to the Formula class
       Formula.mappings.set(key, val);
     }
   }
@@ -155,7 +163,7 @@ export class Formula {
             }
           } else if (char === "(") {
             // add a check if an expression just finished and about to start a new one
-            if (str.charAt(index - 1).match(/[a-zA-Z0-9\)\]\-]/)) { // by Squagward
+            if (str.charAt(index - 1).match(/[a-zA-Z0-9\)\]\-]/)) {
               expressions.push("*");
             }
 
@@ -166,7 +174,7 @@ export class Formula {
           } else if (char === "[") {
 
             // add a check if an expression just finished and about to start a new one
-            if (str.charAt(index - 1).match(/[a-zA-Z0-9\)\]\-]/)) { // by Squagward
+            if (str.charAt(index - 1).match(/[a-zA-Z0-9\)\]\-]/)) {
               expressions.push("*");
             }
 
@@ -219,7 +227,7 @@ export class Formula {
 
         case "within-func":
           char = str.charAt(index);
-          if (char.match(/[a-zA-Z0-9]/)) { // for log10 support etc
+          if (char.match(/[a-zA-Z0-9]/)) {
             tmp += char;
           } else if (char === "(") {
             funcName = tmp;
