@@ -10,7 +10,6 @@ export class Formula {
   static mappings = new Map();
 
   constructor(fStr, topFormula = null) {
-    this.formulaExpression = null;
     this.variables = [];
     this.topFormula = topFormula;
 
@@ -144,8 +143,9 @@ export class Formula {
                 expressions.length === 0 ||
                 (expressions[expressions.length - 1] && typeof expressions[expressions.length - 1] === "string")
               ) {
-                state = "within-nr";
-                tmp = "-";
+                state = 0;
+                tmp = "";
+                expressions.push(-1, "*");
                 break;
               }
             }
@@ -153,7 +153,7 @@ export class Formula {
             // Found a simple operator, store as expression:
             if (
               (index === lastChar || this.isOperator(expressions[index - 1])) &&
-              expressions[index - 1] !== "*" // by Squagward
+              !expressions[index - 1].match(/[\*\^]/)
             ) {
               state = -1; // invalid to end with an operator, or have 2 operators in conjunction
               break;
@@ -214,10 +214,6 @@ export class Formula {
             }
           } else {
             // Number finished on last round, so add as expression:
-            if (tmp === "-") {
-              // just a single "-" means: a variable could follow (e.g. like in 3*-x), we convert it to -1: (3*-1x)
-              tmp = -1;
-            }
             expressions.push(Number(tmp));
             tmp = "";
             state = 0;
