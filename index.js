@@ -1,13 +1,13 @@
 /**
  * JS Formula Parser
  * -------------------
- * This is taken directly from https://github.com/bylexus/fparse.
+ * This is taken from https://github.com/bylexus/fparse but with additions.
  * I already got permission from Alex to use this so you can use this as you wish.
  * 
  * For the module repository, visit https://github.com/Squagward/fparser
  */
 export class Formula {
-  static mappings = [];
+  static mappings = new Map();
 
   constructor(fStr, topFormula = null) {
     this.formulaExpression = null;
@@ -21,20 +21,23 @@ export class Formula {
   }
 
   /**
-   * 
-   * @param {string} newFn the new way you want to rename oldFn
-   * @param {string} oldFn the Math function to call with newFn
+   * `[{name, old}, {name, old}]`
+   * @param {object|object[]} valueObj 
    */
-  static addCustomMapping(newFn, oldFn) {
-    if (typeof Math[oldFn] === "function") {
-      Formula.mappings.push({ [newFn]: oldFn });
-    } else {
-      throw new Error(`${oldFunc} is not a pre-existing Math function`);
+  static addMappings(valueObj) {
+    const results = [];
+    if (valueObj instanceof Array) {
+      for (i = 0; i < valueObj.length; i++) {
+        results[i] = Formula.addMappings(valueObj[i]);
+      }
+      return results;
+    }
+    for ([key, val] of Object.entries(valueObj)) {
+      Formula.mappings.set(key, val);
     }
   }
 
   /**
-   *
    * Splits the given string by ",", makes sure the "," is not within
    * a sub-expression
    * e.g.: str = "x,pow(3,4)" returns 2 elements: x and pow(3,4).
@@ -459,12 +462,7 @@ export class Formula {
         innerValues.push(args[i].evaluate(valueObj));
       }
 
-      for (let i = 0; i < Formula.mappings.length; i++) {
-        let key = Object.keys(Formula.mappings[i])[0];
-        if (typeof Math[Formula.mappings[i][key]] === "function") {
-          return Math[Formula.mappings[i][key]].apply(me, innerValues);
-        }
-      }
+
       // If the valueObj itself has a function definition with
       // the function name, call this one:
       if (valueObj && typeof valueObj[fname] === "function") {
@@ -472,6 +470,8 @@ export class Formula {
       } else if (typeof me[fname] === "function") {
         // perhaps the Formula object has the function? so call it:
         return me[fname].apply(me, innerValues);
+      } else if (typeof Math[Formula.mappings.get(fname)] === "function") {
+        return Math[Formula.mappings.get(fname)].apply(me, innerValues);
       } else if (typeof Math[fname] === "function") {
         // Has the JS Math object a function as requested? Call it:
         return Math[fname].apply(me, innerValues);

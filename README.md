@@ -27,13 +27,11 @@ Parses a mathematical formula from a string. Known expressions:
 Import using any of these methods:
 
 ```javascript
-import { Formula, ModifiedFormula } from "fparser";
-import { Formula, ModifiedFormula } from "../fparser";
+import Formula from "fparser";
+import Formula from "../fparser";
+import { Formula } from "fparser";
+import { Formula } from "../fparser";
 ```
-
-> Note: `ModifiedFormula` has ln and log functions so in case you don't want to do `log10(x)`,
-> you can just use `log(x)` instead. However, if you would like to stay true to the `Math` functions,
-> go ahead and use `Formula` objects.
 
 ```javascript
 // 1. Create a Formula object instance by passing a formula string:
@@ -74,8 +72,6 @@ const result = fObj.evaluate({ var1: 5, var2: 0.7 });
 
 ### Using user-defined functions
 
-Currently only the 2nd option is functional. I'll try to see if I could find a fix to it.
-
 ```javascript
 const fObj = new Formula('sin(inverse(x))');
 
@@ -102,7 +98,17 @@ const f4 = new Formula("x*sin(PI*y) + y / (2-x*[var1]) + [var2]");
 console.log(f4.getVariables()); // ['x','y','var1','var2']
 ```
 
-## Credit:
+### Adding custom Math function names
 
-- This is taken directly from https://github.com/bylexus/fparse with some changes
+```javascript
+// Rename the Math method of your choice to something else
+Formula.addMappings([{ ln: "log" }, { log: "log10" }]);
+console.log(Formula.calc("log(x)", { x: 10 })); // 1
+// This would be 2.3025... if it was using Math.log(10)
+console.log(Formula.calc("ln(x)", { x: 10 })); // 2.3025...
+```
+
+# Credit:
+
+- This is taken from https://github.com/bylexus/fparse with changes
 - I have contacted Alex (original creator) and he said it was fine for me to upload.
