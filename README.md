@@ -102,10 +102,10 @@ console.log(f4.getVariables()); // ['x','y','var1','var2']
 
 ```javascript
 // Rename the Math method of your choice to something else
-Formula.addMappings([{ ln: "log" }, { log: "log10" }]);
-console.log(Formula.calc("log(x)", { x: 10 })); // 1
-// This would be 2.3025... if it was using Math.log(10)
+Formula.addMappings([{ ln: "log" }, { func: "log10" }]);
 console.log(Formula.calc("ln(x)", { x: 10 })); // 2.3025...
+// This would be 2.3025... if it was using Math.log(10)
+console.log(Formula.calc("func(x)", { x: 10 })); // 1
 ```
 
 # Credit:
