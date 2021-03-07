@@ -503,6 +503,7 @@ export class Formula {
     return new Formula(formula).evaluate(valueObj);
   }
 }
+export default Formula;
 
 /**
  * Known issues:
