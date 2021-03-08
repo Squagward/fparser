@@ -184,6 +184,10 @@ export class Formula {
           } else if (char.match(/[a-zA-Z]/)) {
             // multiple chars means it may be a function, else its a var which counts as own expression:
             if (index < lastChar && str.charAt(index + 1).match(/[a-zA-Z]/)) {
+              // check for coefficient
+              if (str.charAt(index - 1).match(/[0-9]/)) {
+                expressions.push("*");
+              }
               tmp = char;
               state = "within-func";
             } else {
@@ -272,6 +276,9 @@ export class Formula {
                 // Access to the function is private within the closure:
                 expressions.push(this.createFunctionEvaluator(tmp, funcName));
                 funcName = null;
+              }
+              if (str.charAt(index + 1).match(/[a-zA-Z0-9]/)) {
+                expressions.push("*");
               }
               state = 0;
             } else {
@@ -511,6 +518,5 @@ export default Formula;
 
 /**
  * Known issues:
- * (x-2)x doesn't multiply by outside
  * xy doesn't equal x*y
  */
