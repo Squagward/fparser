@@ -25,7 +25,7 @@ export class Formula {
    * This allows the user to input `ln(x)`. 
    * 
    * This also can take an array of mapping objects as the argument.  
-   * `Formula.addMappings({ "ln": "log" }, { "func": "log10" });`  
+   * `Formula.addMappings([{ "ln": "log" }, { "func": "log10" }]);`  
    * Now when the user inputs `log(x)` it still returns the natural log,
    * but when they input `func(x)` it now returns log base 10.
    */
@@ -86,11 +86,11 @@ export class Formula {
    * and replaces some known constants:
    */
   cleanupInputString(s) {
-    const constants = ["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"];
+    const constants = ["pi", "e", "ln2", "ln10", "log2e", "log10e", "sqrt1_2", "sqrt2"];
 
     s = s.replace(/[\s]+/, "");
     constants.forEach(c => {
-      s = s.replace(new RegExp(`([^w]+|^)${c}([^A-Za-z]+|$)`), `$1${Math[c]}$2`);
+      s = s.replace(new RegExp(`([^w]+|^)${c}([^A-Za-z]+|$)`), `$1${Math[c.toUpperCase()]}$2`);
     });
     return s;
   }
