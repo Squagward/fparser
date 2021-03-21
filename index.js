@@ -23,21 +23,12 @@ export class Formula {
    * Add custom `Math` class mappings to names of your choosing.  
    * `Formula.addMappings({ "ln": "log" });`  
    * This allows the user to input `ln(x)`. 
-   * 
-   * This also can take an array of mapping objects as the argument.  
-   * `Formula.addMappings([{ "ln": "log" }, { "func": "log10" }]);`  
-   * Now when the user inputs `log(x)` it still returns the natural log,
+   *
+   * `Formula.addMappings({ "ln": "log", "func": "log10" });`  
+   * Now when the user inputs `log(x)` or `ln(x)` it returns the natural log,
    * but when they input `func(x)` it now returns log base 10.
    */
   static addMappings(valueObj) {
-    const results = [];
-    if (valueObj instanceof Array) {
-      for (i = 0; i < valueObj.length; i++) {
-        // recursively add mappings for every object in the array
-        results[i] = Formula.addMappings(valueObj[i]);
-      }
-      return results;
-    }
     for ([key, val] of Object.entries(valueObj)) {
       // add the key value pairs to the Formula class
       Formula.mappings.set(key, val);
