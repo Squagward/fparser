@@ -77,11 +77,11 @@ export class Formula {
    * and replaces some known constants:
    */
   cleanupInputString(s) {
-    const constants = ["pi", "e", "ln2", "ln10", "log2e", "log10e", "sqrt1_2", "sqrt2"];
+    const constants = ["PI", "E", "LN2", "LN10", "LOG2E", "LOG10E", "SQRT1_2", "SQRT2"];
 
     s = s.replace(/[\s]+/, "");
     constants.forEach(c => {
-      s = s.replace(new RegExp(`([^w]+|^)${c}([^A-Za-z]+|$)`), `$1${Math[c.toUpperCase()]}$2`);
+      s = s.replace(new RegExp(`([^\w]+|^)${c}([^A-Za-z]+|$)`), `$1${Math[c]}$2`);
     });
     return s;
   }

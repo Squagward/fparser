@@ -5,7 +5,7 @@
 fparser provides a Formula class that parses strings containing mathematical formulas (e.g. `x*sin(PI*x/2)`) into an evaluationable object.
 One can then provide values for all unknown variables / functions and evaluate a numeric value from the formula.
 
-For an example application, see **coming soon**.
+For an example application, see [EquationGrapher](https://www.chattriggers.com/modules/v/EquationGrapher).
 
 ## Features
 
@@ -84,7 +84,7 @@ const fObj = new Formula('sin(inverse(x))');
 // This way works!
 const result = fObj.evaluate({
 	x: 2 / Math.PI,
-	inverse: value =>  -1 * value
+	inverse: value =>  1 / value
 });
 
 If defined in the value object AND on the formula object, the Value object has the precedence
